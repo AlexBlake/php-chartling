@@ -12,6 +12,6 @@
     "minimum-stability": "dev",
     "require": {},
     "autoload": {
-        "psr-4": {"Chartling\\": "src/"}
+        "psr-4": {"alexblake\\chartling\\": "src"}
     }
 }

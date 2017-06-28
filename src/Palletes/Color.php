@@ -15,7 +15,7 @@ class Color {
         $this->name = $name;
         if($color != null)
         {
-            $this->set($color);
+            $this->setColor($color);
         }
     }
 
@@ -23,11 +23,11 @@ class Color {
         return $this->name;
     }
 
-    public function get() {
-        return $this->color;
+    public function value() {
+        return (int)$this->color;
     }
 
-    public function set($color) {
+    public function setColor($color) {
         // validate any new color
         $color = $this->validateColorArray($color);
         switch(count($color)) {
@@ -50,7 +50,7 @@ class Color {
         }
 
         // ensure int values in range 0-255 for 0-2(rgb) and 0-127 for 3(alpha)
-        $valid = count($color) != count(array_filter($color, function(&$v, $k) { 
+        $valid = count($color) == count(array_filter($color, function(&$v, $k) { 
             return is_int($v) && ( $k == 3 ? ($v <= 127 && $v >= 0 ) : ($v <= 255 && $v >= 0 ) ); 
         }, ARRAY_FILTER_USE_BOTH ));
 

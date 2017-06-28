@@ -4,9 +4,10 @@ namespace Chartling;
 *   Author: Alex Blake <cr3ch4@gmail.com>
 *   Chart Class for generating chart images.
 */
+
 class Chart {
     
-    protected $image = null;
+    public $image = null;
 
     private $height = 0;
     private $width = 0;
@@ -32,13 +33,13 @@ class Chart {
         // Set class variables
         $this->height = $height;
         $this->width = $width;
-        $this->$alpha_channel = ( $alpha ? true : false );
+        $this->alpha_channel = ( $alpha ? true : false );
 
         // Create the image per dimentions
         $this->image = imagecreatetruecolor($this->height, $this->width);
         
         // Add handle for alpha channel if needed
-        if($this->$alpha_channel)
+        if($this->alpha_channel)
         {
             imagesavealpha($this->image, true);
             imagealphablending($this->image, false);
@@ -47,7 +48,8 @@ class Chart {
         // Handle background colour
         if(is_array($bg) && count($bg) >= 3 && count($bg) <= 4)
         {
-            $this->background_color = $this->addColor($bg);
+            $this->background_color = new \Chartling\Palletes\Color($this->image, 'background', $bg);
+            $this->setBackground($this->background_color);
         }
     }
 
@@ -78,7 +80,7 @@ class Chart {
     */
     public function setBackground($color) {
         // only handle out colour objects and references to maintained colors to avoid mishaps
-        if($color instanceof \Chartling\Palletes\Color) {
+        if($color instanceof Color) {
             $this->background_color = $color;
         }
         elseif(is_string($color) && isset($this->colors[$color]))
@@ -87,7 +89,7 @@ class Chart {
         }
 
         // Set the image backrgound color
-        $res = imagefill($this->image, 0, 0, $this->background_color->get());
+        $res = imagefill($this->image, 0, 0, $this->background_color->value());
         if($res !== false)
         {
             return $this;
@@ -110,10 +112,19 @@ class Chart {
         $color = new \Chartling\Palletes\Color($this->image, $name, ( $a == null ? [$r, $g, $b] : [$r, $g, $b, $a] ));
         if($color !== false)
         {
-            $colors[$name] = $color;
+            $this->colors[$name] = $color;
             return $this;
         }
         return false;
+    }
+
+    public function getColor($name) {
+        return $this->colors[$name];
+    }
+
+    public function addShape($shape) {
+        $shape->render($this);
+        return $this;
     }
 
 }
