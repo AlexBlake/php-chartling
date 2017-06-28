@@ -1,0 +1,14 @@
+{
+    "name": "alexblake/chartling",
+    "description": "PHP charting library using native PHP image drawing functionality, intended to simplify the generation of chart images for basic reports and static content generation.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alex Blake",
+            "email": "cr3ch4@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
