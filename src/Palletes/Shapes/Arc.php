@@ -4,14 +4,15 @@ namespace Chartling\Palletes\Shapes;
 *   Author: Alex Blake <cr3ch4@gmail.com>
 *   Chart Color Class for generating chart colors for php images.
 */
-class Circle extends \Chartling\Palletes\Shape {
+class Arc extends \Chartling\Palletes\Shape {
 
     private $size;
     private $arc = [0,0];
 
-    public function __construct($vertices, $size = [0,0], $fill = null, $line = null, $lineWidth = 1) {
+    public function __construct($vertices, $size = [0,0], $arc = [0,0], $fill = null, $line = null, $lineWidth = 1) {
         parent::__construct($vertices, $fill, $line, $lineWidth);
         $this->size = $size;
+        $this->arc = $arc;
     }
 
     public function doRender(&$chart) {
@@ -38,5 +39,6 @@ class Circle extends \Chartling\Palletes\Shape {
             if(!$done) { return false; }
         }
 
+        return true;
     }
 }

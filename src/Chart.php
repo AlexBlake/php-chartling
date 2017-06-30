@@ -9,13 +9,17 @@ class Chart {
     
     public $image = null;
 
-    private $height = 0;
-    private $width = 0;
+    public $height = 0;
+    public $width = 0;
 
     protected $alpha_channel = false;
 
     private $colors = [];
     private $background_color = null;
+
+    private $attributes = [
+        'offset-degree' => 0,
+    ];
 
 
     /**
@@ -25,15 +29,15 @@ class Chart {
     *   @param Int $width   Height of chart
     *   
     *   Optional
-    *   @param Boolean $alpha   if the chart should facilitate alpha channel colors or not
     *   @param Int $bg  background color of the chart
+    *   @param Boolean $alpha   if the chart should facilitate alpha channel blending or not
     */
-    public function __construct($height, $width, $alpha = false, $bg = null) {
+    public function __construct($height, $width, $bg = null, $alpha = false) {
         
         // Set class variables
         $this->height = $height;
         $this->width = $width;
-        $this->alpha_channel = ( $alpha ? true : false );
+        $this->alpha_channel = $alpha;
 
         // Create the image per dimentions
         $this->image = imagecreatetruecolor($this->height, $this->width);
@@ -42,15 +46,18 @@ class Chart {
         if($this->alpha_channel)
         {
             imagesavealpha($this->image, true);
-            imagealphablending($this->image, false);
+            imagealphablending($this->image, true);
+            imagesetinterpolation($this->image, IMG_TRIANGLE);
         }
 
         // Handle background colour
         if(is_array($bg) && count($bg) >= 3 && count($bg) <= 4)
         {
-            $this->background_color = new \Chartling\Palletes\Color($this->image, 'background', $bg);
+            $this->background_color = new \Chartling\Palletes\Color('background', $bg);
+            $this->background_color->render($this);
             $this->setBackground($this->background_color);
         }
+        return $this;
     }
 
     /**
@@ -109,10 +116,11 @@ class Chart {
     *   @param Int $a    Integer value for alpha opacity in the range of 0-127
     */
     public function setColor($name, $r, $g, $b, $a = null) {
-        $color = new \Chartling\Palletes\Color($this->image, $name, ( $a == null ? [$r, $g, $b] : [$r, $g, $b, $a] ));
+        $color = new \Chartling\Palletes\Color($name, ( $a == null ? [$r, $g, $b] : [$r, $g, $b, $a] ));
         if($color !== false)
         {
             $this->colors[$name] = $color;
+            $this->colors[$name]->render($this);
             return $this;
         }
         return false;
@@ -127,4 +135,24 @@ class Chart {
         return $this;
     }
 
+    public function setAttribute($name, $value) {
+        $this->attributes[$name] = $value;
+        return $this;
+    }
+
+    public function getAttribute($name) {
+        return $this->attributes[$name];
+    }
+
+    public function getDegree($val) {
+        return $val + $this->attributes['offset-degree'];
+    }
+
+    public function toBase64() {
+        ob_start();
+        $this->renderPNG();
+        $contents = ob_get_contents();
+        ob_end_clean();
+        return "data:image/png;base64," . base64_encode($contents);
+    }
 }

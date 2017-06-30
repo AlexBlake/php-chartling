@@ -9,35 +9,33 @@ class Color {
     protected $image;
     public $name;
     protected $color;
+    protected $color_value;
 
-    public function __construct(&$image, $name, $color = null) {
-        $this->image = $image;
+    public function __construct($name, $color) {
         $this->name = $name;
-        if($color != null)
-        {
-            $this->setColor($color);
-        }
+        $this->color = $this->validateColorArray($color);
     }
 
     public function getName() {
         return $this->name;
     }
 
-    public function value() {
-        return (int)$this->color;
-    }
-
-    public function setColor($color) {
+    public function render(&$chart) {
+        $this->image = $chart->image;
         // validate any new color
-        $color = $this->validateColorArray($color);
-        switch(count($color)) {
+        switch(count($this->color)) {
             case 3:
-                $this->color = imagecolorallocate($this->image, $color[0], $color[1], $color[2]);
+                $this->color_value = imagecolorallocate($this->image, $this->color[0], $this->color[1], $this->color[2]);
             break;
             case 4:
-                $this->color = imagecolorallocatealpha($this->image, $color[0], $color[1], $color[2], $color[3]);
+                $this->color_value = imagecolorallocatealpha($this->image, $this->color[0], $this->color[1], $this->color[2], $this->color[3]);
             break;
         }
+
+    }
+
+    public function value() {
+        return (int)$this->color_value;
     }
 
     public function validateColorArray($color) {
