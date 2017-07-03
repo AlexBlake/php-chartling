@@ -14,7 +14,7 @@ class Chart {
 
     protected $alpha_channel = false;
 
-    private $colors = [];
+    protected $colors = [];
     private $background_color = null;
 
     private $attributes = [
@@ -40,7 +40,7 @@ class Chart {
         $this->alpha_channel = $alpha;
 
         // Create the image per dimentions
-        $this->image = imagecreatetruecolor($this->height, $this->width);
+        $this->image = imagecreatetruecolor($this->width, $this->height);
         
         // Add handle for alpha channel if needed
         if($this->alpha_channel)
@@ -87,7 +87,7 @@ class Chart {
     */
     public function setBackground($color) {
         // only handle out colour objects and references to maintained colors to avoid mishaps
-        if($color instanceof Color) {
+        if($color instanceof \Chartling\Palletes\Color) {
             $this->background_color = $color;
         }
         elseif(is_string($color) && isset($this->colors[$color]))
@@ -126,6 +126,22 @@ class Chart {
         return false;
     }
 
+    public function setColors($colors) {
+        foreach($colors as $key => $color) {
+            if(! $color instanceof \Chartling\Palletes\Color)
+            {
+                $color = new \Chartling\Palletes\Color($key, ( count($color) == 3 ? [$color[0], $color[1], $color[2]] : [$color[0], $color[1], $color[2], $color[3]] ));
+            }
+            $this->colors[$key] = $color;
+            $this->colors[$key]->render($this);
+            if($color === false)
+            {
+                throw new InvalidColorException();
+            }
+        }
+        return $this;
+    }
+
     public function getColor($name) {
         return $this->colors[$name];
     }
@@ -154,5 +170,46 @@ class Chart {
         $contents = ob_get_contents();
         ob_end_clean();
         return "data:image/png;base64," . base64_encode($contents);
+    }
+
+    protected function validateDataset($dataset, $can_have_arrays = null, $can_have_mixed = null, $can_be_odd = null) {
+        if(!is_array($dataset)) { 
+            throw new \Chartling\Exceptions\InvalidDatasetException("Expected Array or values Or Array of location sets, got ".get_class($dataset));
+        }
+
+        //Ensure there are items in the array else fail with empty data
+        if(count($dataset) == 0)
+        {
+            throw new \Chartling\Exceptions\InvalidDatasetException("Expected Array or values Or Array of location sets, got empty dataset");
+        }
+
+        // validate if there is an array present anywhere
+        $arrArr = array_filter($dataset, "is_array");
+        if(count($arrArr) > 0)
+        {
+            // cannot mix types
+            if(count($arrArr) != count($dataset) && !$can_have_mixed)
+            {
+                throw new \Chartling\Exceptions\InvalidDatasetException("Expected Array or values Or Array of location sets, got Mixed");
+            }
+            $arrArr = array_filter($dataset, function(&$el){ return count($el) == 2; });
+            // need data locations with 2 coords
+            if(count($arrArr) != count($dataset) && !$can_be_odd)
+            {
+                throw new \Chartling\Exceptions\InvalidDatasetException("Expected Array of location sets [X,Y], some location sets missing or have extra data");
+            }
+        }
+        // Validate if its a continuous dataset
+        else
+        {
+            // validate that there are an even quantity of x/y values
+            if(count($dataset) % 2 == 1)
+            {
+                if(!$can_be_odd) {
+                    throw new \Chartling\Exceptions\InvalidDatasetException("Expected Array of values corresponding to x/y, dataset has invalid quantity of values (odd)");
+                }
+            }
+        }
+        return true;
     }
 }
