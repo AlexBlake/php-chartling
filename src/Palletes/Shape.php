@@ -67,6 +67,13 @@ class Shape {
         {
             return $color->value();
         }
+        if(is_array($color))
+        {
+            $color = new \Chartling\Palletes\Color(null, $color);
+            $chart->colors[] = $color;
+            $color->render($chart);
+            return $color->value();
+        }
         if(is_string($color))
         {
             return $chart->getColor($color)->value();

@@ -22,7 +22,7 @@ class Pie extends \Chartling\Chart {
     *   @param Int $bg  background color of the chart
     *   @param Boolean $alpha   if the chart should facilitate alpha channel blending or not
     */
-    public function __construct($height, $width, $dataset, $colors, $line, $bg = null, $alpha = false) {
+    public function __construct($height, $width, $dataset, $bg = null, $alpha = false) {
         parent::__construct($height, $width, $bg, $alpha);
         
         // set centre point locaiton for anchor
@@ -30,24 +30,18 @@ class Pie extends \Chartling\Chart {
 
         // set the dataset for the graph from input
         $this->setData($dataset);
-        $this->setColors($colors);
-        $this->setPieColors($colors);
-
-        $this->line_color = $line;
-
-        $this->render();
-
-        return $this;
     }
 
-    private function render() {
+
+    public function render() {
         $last = $this->getDegree(0);
         $color_idx = 0;
         foreach($this->dataset as $deg) {
             
             $fill = $this->pie_colors[$color_idx];
+            $line = $this->colors[$this->line_color];
             $angle = $last+$this->getDegree($deg);
-            $this->drawArc($last, $angle, $fill, $this->line_color, 1);
+            $this->drawArc($last, $angle, $fill, $line, 1);
             
             $last = $angle;
             $color_idx++;
@@ -62,30 +56,20 @@ class Pie extends \Chartling\Chart {
         $this->validateDataset($dataset);
 
         $this->dataset = $dataset;
-        // // Run collection if validation met
-        // // $save = [];
-        // foreach($dataset as $data) {
-        //     // if(is_array($data))
-        //     // {
-        //         $this->dataset[] = $data;
-        //     // }
-        //     // else
-        //     // {
-        //         // $save[] = $data;
-        //     // }
-
-        //     // if(count($save) == 2) {
-        //     //     $this->dataset[] = $save;
-        //     //     $save = [];
-        //     // }
-        // }
         return $this;
     }
 
-    protected function setPieColors($colors) {
-        foreach(array_keys($colors) as $key) {
+    public function setPieColors($colors) {
+        foreach($colors as $key) {
             $this->pie_colors[] = $key;
         }
+        return $this;
+    }
+
+    public function setLineColor($color) {
+        $this->line_color = $color;
+
+        return $this;
     }
 
     protected function validateDataset($dataset, $can_have_arrays = null, $can_have_mixed = null, $can_be_odd = null) {

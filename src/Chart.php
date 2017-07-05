@@ -14,7 +14,7 @@ class Chart {
 
     protected $alpha_channel = false;
 
-    protected $colors = [];
+    public $colors = [];
     private $background_color = null;
 
     private $attributes = [
@@ -57,7 +57,6 @@ class Chart {
             $this->background_color->render($this);
             $this->setBackground($this->background_color);
         }
-        return $this;
     }
 
     /**
@@ -69,6 +68,13 @@ class Chart {
     *   @param Int $filters     Bitmask of PHP constants for filters to apply to image
     */
     public function renderPNG($path = null, $quality = 6, $filters = null){
+        // check if anything needs to be rendered and render it
+        
+        if(method_exists($this, 'render')) {
+            $this->render();
+        }
+        
+        // do pathing checks
         if($path != null)
         {
             if(is_writable($path))
@@ -119,6 +125,10 @@ class Chart {
         $color = new \Chartling\Palletes\Color($name, ( $a == null ? [$r, $g, $b] : [$r, $g, $b, $a] ));
         if($color !== false)
         {
+            if($name == null) {
+                $this->colors[] = $color;
+                $color->render($this);
+            }
             $this->colors[$name] = $color;
             $this->colors[$name]->render($this);
             return $this;
@@ -148,6 +158,11 @@ class Chart {
 
     public function addShape($shape) {
         $shape->render($this);
+        return $this;
+    }
+
+    public function addText($text) {
+        $text->render($this);
         return $this;
     }
 

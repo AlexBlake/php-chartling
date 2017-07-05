@@ -10,16 +10,32 @@ class Scale extends \Chartling\Palletes\Shape {
     private $end;
 
     private $scale;
+    private $scalePoints;
+    private $scaleInterval;
+    private $scaleInvert;
+     
     private $scaleLength;
     private $scaleSide;
 
-    public function __construct($start, $end, $scale, $scaleLength, $scaleSide, $fill = null, $lineWidth = 1) {
+    private $scale_formater;
+
+    public function __construct($start, $end, $scale, $scalePoints, $scaleLength, $scaleSide, $fill = null, $lineWidth = 1) {
         parent::__construct($start+$end, $fill, $fill, $lineWidth);
+        
         $this->start = $start;
         $this->end = $end;
+
         $this->scale = $scale;
+        $this->scalePoints = $scalePoints;
+        $this->scaleInterval = ( max($scale) - min($scale) ) / $scalePoints;
+        $this->scaleInvert = ( $scale[0] > $scale[1] ? true : false );
+
         $this->scaleLength = $scaleLength;
         $this->scaleSide = $scaleSide;
+    }
+
+    public function formatScale(callable $callback) {
+        $this->scale_formater = $callback;
     }
 
     public function doRender(&$chart) {
@@ -40,23 +56,68 @@ class Scale extends \Chartling\Palletes\Shape {
             $distance = $this->distance($this->start, $this->end);
             // var_dump($distance);die;
             // calculate the step
-            $step = $distance / $this->scale;
+            $step = $distance / $this->scalePoints;
             
             // start drawing scale from start of line
             $coords = $this->start;
-            for( $i = 0; $i <= $this->scale; $i++ )
+            for( $i = 0; $i <= $this->scalePoints; $i++ )
             {
-                $point = $this->pointPerpendicular($coords);
+                $point = $this->pointPerpendicular($coords, $this->scaleLength);
                 imageline($chart->image, $coords[0], $coords[1], $point[0], $point[1], $color);
 
                 $coords = $this->pointOnLineAtDistance($step*$i, $distance);
+
+                $point_txt = $this->pointPerpendicular($coords, $this->textPadding());
+                $this->drawScaleTextAtTick($chart, $point_txt, $i);
             }
 
-            $point = $this->pointPerpendicular($coords);
+            $point = $this->pointPerpendicular($coords, $this->scaleLength);
             imageline($chart->image, $coords[0], $coords[1], $point[0], $point[1], $color);
+
+            $point_txt = $this->pointPerpendicular($coords, $this->textPadding());
+            $this->drawScaleTextAtTick($chart, $point_txt, $this->scalePoints);
         }
 
         return true;
+    }
+
+    private function textPadding() {
+        switch($this->lineType()) {
+            case 'X':
+                return $this->scaleLength+$this->lineWidth;
+            break;
+            case 'Y':
+                return $this->scaleLength+$this->lineWidth;
+            break;
+            case false:
+                return $this->scaleLength+$this->lineWidth;
+            break;
+        }
+    }
+
+    private function drawScaleTextAtTick(&$chart, $point, $tick) {
+
+        $value = ($this->scaleInvert ? ($this->scaleInterval * ($this->scalePoints - $tick)) : ($this->scaleInterval * $tick) );
+        $angle = $this->getAngle();
+        $anchor = 'middle';
+        switch(true) {
+            case $angle >= 0 && $angle < 90:
+                $anchor = 'top';
+            break;
+            case $angle >= 90 && $angle < 180:
+                $anchor = 'top';
+                $angle = -1*$angle;
+            break;
+            case $angle >= 180 && $angle < 270:
+                $anchor = 'top';
+            break;
+            case $angle >= 270 && $angle < 361:
+                $anchor = 'top';
+                $angle = -1*$angle;
+            break;
+        }
+        $chart->addText(new \Chartling\Palletes\Text($point, 10, $value, $this->fill, $angle, null, $anchor ));
+
     }
 
     private function distance($p1, $p2) {
@@ -65,6 +126,10 @@ class Scale extends \Chartling\Palletes\Shape {
 
     private function lineType() {
         return ( $this->start[0] == $this->end[0] ? 'X' : ($this->start[1] == $this->end[1] ? 'Y' : false ) );
+    }
+
+    private function getAngle() {
+        return atan2( ($this->end[1]-$this->start[1]), ($this->end[0]-$this->start[0])) * 180 / pi();
     }
 
     private function slope() {
@@ -102,7 +167,7 @@ class Scale extends \Chartling\Palletes\Shape {
         }
     }
 
-    private function pointPerpendicular($coords) {
+    private function pointPerpendicular($coords, $distance) {
         if($coords == null)
         {
             $coords = [ $this->start, $this->end ];
@@ -110,21 +175,21 @@ class Scale extends \Chartling\Palletes\Shape {
         switch($this->lineType()) {
             case 'X':
                 return [
-                    $coords[0] + ($this->scaleSide*$this->scaleLength),
+                    $coords[0] + ($this->scaleSide*$distance),
                     $coords[1]
                 ];
             break;
             case 'Y':
                 return [
                     $coords[0],
-                    $coords[1] + ($this->scaleSide*$this->scaleLength)
+                    $coords[1] + ($this->scaleSide*$distance)
                 ];
             break;
             case false:
                 $slope = -1*(1/$this->slope());
                 $offset = $coords[1] - $slope * $coords[0];
 
-                $x = $coords[0] + ($this->scaleSide*$this->scaleLength);
+                $x = $coords[0] + ($this->scaleSide*$distance);
                 $y = ( $slope * $x ) + $offset;
                 $x = ($y - $offset ) /  $slope;
                 return [
@@ -134,68 +199,6 @@ class Scale extends \Chartling\Palletes\Shape {
         }
     }
 
-
-    // private function getScaleSide(&$chart) {
-
-    //     switch( join('-', [$this->getQuadrant($chart, $this->start), $this->getQuadrant($chart, $this->end)] ) ){
-    //         // Starting quad 1
-    //         case '1-1':
-    //             if($this->start[0] < $this->end[0])
-    //             {
-    //                 return 1
-    //             }
-    //         break;
-    //         case '1-2':
-
-    //         break;
-    //         case '1-3':
-            
-    //         break;
-    //         case '1-4':
-            
-    //         break;
-    //         // Starting quad 2
-    //         case '2-1':
-
-    //         break;
-    //         case '2-2':
-
-    //         break;
-    //         case '2-3':
-            
-    //         break;
-    //         case '2-4':
-            
-    //         break;
-    //         // Starting quad 3
-    //         case '3-1':
-
-    //         break;
-    //         case '3-2':
-
-    //         break;
-    //         case '3-3':
-            
-    //         break;
-    //         case '3-4':
-            
-    //         break;
-    //         // Starting quad 4
-    //         case '4-1':
-
-    //         break;
-    //         case '4-2':
-
-    //         break;
-    //         case '4-3':
-            
-    //         break;
-    //         case '4-4':
-            
-    //         break;
-    //     }
-        
-    // }
 
     private function getQuadrant(&$chart, $point) {
         switch(join('-',[( $point[0] <= $chart->width/2 ? 0 : 1 ),( $point[1] <= $chart->height/2 ? 1 : 0 )])) {
