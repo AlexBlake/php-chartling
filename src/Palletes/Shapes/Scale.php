@@ -10,32 +10,57 @@ class Scale extends \Chartling\Palletes\Shape {
     private $end;
 
     private $scale;
+    private $scaleOffset;
     private $scalePoints;
     private $scaleInterval;
     private $scaleInvert;
+    private $fontSize;
      
     private $scaleLength;
     private $scaleSide;
 
     private $scale_formater;
 
-    public function __construct($start, $end, $scale, $scalePoints, $scaleLength, $scaleSide, $fill = null, $lineWidth = 1) {
+    public function __construct($start, $end, $scale, $scalePoints, $scaleLength, $scaleSide, $fill = null, $lineWidth = 1, $fontSize = 10, $formatCallback) {
         parent::__construct($start+$end, $fill, $fill, $lineWidth);
         
+        $this->fontSize = $fontSize;
+
         $this->start = $start;
         $this->end = $end;
 
         $this->scale = $scale;
+        $this->scaleOffset = min($this->scale);
+
         $this->scalePoints = $scalePoints;
         $this->scaleInterval = ( max($scale) - min($scale) ) / $scalePoints;
         $this->scaleInvert = ( $scale[0] > $scale[1] ? true : false );
 
         $this->scaleLength = $scaleLength;
         $this->scaleSide = $scaleSide;
+
+        $this->formatScale($formatCallback);
+
     }
 
-    public function formatScale(callable $callback) {
+    public function __call($method, $args)
+    {
+        if(is_callable(array($this, $method))) {
+            return call_user_func_array($this->$method, $args);
+        }
+        // else throw exception
+    }
+
+    public function formatScale($callback) {
         $this->scale_formater = $callback;
+    }
+
+    private function doScaleFormat($value) {
+        if($this->scale_formater != null)
+        {
+            return $this->scale_formater($value);
+        }
+        return $value;
     }
 
     public function doRender(&$chart) {
@@ -97,7 +122,8 @@ class Scale extends \Chartling\Palletes\Shape {
 
     private function drawScaleTextAtTick(&$chart, $point, $tick) {
 
-        $value = ($this->scaleInvert ? ($this->scaleInterval * ($this->scalePoints - $tick)) : ($this->scaleInterval * $tick) );
+        // var_dump($this->scaleOffset, $this->scale, $this->scaleInterval, $tick);die;
+        $value = $this->scaleOffset + ($this->scaleInvert ? ($this->scaleInterval * ($this->scalePoints - $tick)) : ($this->scaleInterval * $tick) );
         $angle = $this->getAngle();
         $anchor = 'middle';
         switch(true) {
@@ -116,7 +142,8 @@ class Scale extends \Chartling\Palletes\Shape {
                 $angle = -1*$angle;
             break;
         }
-        $chart->addText(new \Chartling\Palletes\Text($point, 10, $value, $this->fill, $angle, null, $anchor ));
+
+        $chart->addText(new \Chartling\Palletes\Text($point, $this->fontSize, $this->doScaleFormat($value), $this->fill, $angle, null, $anchor ));
 
     }
 

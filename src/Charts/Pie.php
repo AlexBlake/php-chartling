@@ -34,14 +34,17 @@ class Pie extends \Chartling\Chart {
 
 
     public function render() {
-        $last = $this->getDegree(0);
+        $last = 0;
         $color_idx = 0;
         foreach($this->dataset as $deg) {
             
             $fill = $this->pie_colors[$color_idx];
             $line = $this->colors[$this->line_color];
-            $angle = $last+$this->getDegree($deg);
-            $this->drawArc($last, $angle, $fill, $line, 1);
+            $angle = $last+$deg;
+            $angle = ($angle > 360 ? $angle-360 : $angle);
+            // var_dump([$last,$angle]);
+            if($deg > 0)
+                $this->drawArc($last, $angle, $fill, $line, 1);
             
             $last = $angle;
             $color_idx++;

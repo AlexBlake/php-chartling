@@ -176,7 +176,8 @@ class Chart {
     }
 
     public function getDegree($val) {
-        return $val + $this->attributes['offset-degree'];
+        $value = $val + $this->attributes['offset-degree'];
+        return ($value >= 0 ? $value : 360 - abs($value));
     }
 
     public function toBase64() {
