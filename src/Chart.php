@@ -136,6 +136,11 @@ class Chart {
         return false;
     }
 
+    /**
+    *   Function to add a color to the images pallete
+    *   
+    *   @param Array $colors    Assoc Array map of names to color presets to load onto the chart
+    */
     public function setColors($colors) {
         foreach($colors as $key => $color) {
             if(! $color instanceof \Chartling\Palletes\Color)
@@ -152,34 +157,69 @@ class Chart {
         return $this;
     }
 
+    /**
+    *   Function to get a color from the images pallete
+    *   
+    *   @param String $name    String value for name reference to color
+    */
     public function getColor($name) {
         return $this->colors[$name];
     }
 
+    /**
+    *   Function to add shape object to the image
+    *   
+    *   @param Chartling\Palletes\Shape $shape    Shape object to render to image
+    */
     public function addShape($shape) {
         $shape->render($this);
         return $this;
     }
 
+    /**
+    *   Function to add text object to the image
+    *   
+    *   @param Chartling\Palletes\Text $text    Text object to render to image
+    */
     public function addText($text) {
         $text->render($this);
         return $this;
     }
 
+    /**
+    *   Function to add a color to the images pallete
+    *   
+    *   @param String $name     String value to reference name of attribute
+    *   @param Varying $value   Value to Set To
+    */
     public function setAttribute($name, $value) {
         $this->attributes[$name] = $value;
         return $this;
     }
 
+    /**
+    *   Function to get an attribute from chart object
+    *   
+    *   @param String $name     String value to reference name of attribute
+    */
     public function getAttribute($name) {
         return $this->attributes[$name];
     }
 
+    /**
+    *   Function to get an attribute from chart object
+    *   
+    *   @param Float $val     Float value to calcuate the 'real' degrees from using offset of chart
+    */
     public function getDegree($val) {
         $value = $val + $this->attributes['offset-degree'];
         return ($value >= 0 ? $value : 360 - abs($value));
     }
 
+    /**
+    *   Function to render an image as Base64 encoded string
+    *   
+    */
     public function toBase64() {
         ob_start();
         $this->renderPNG();
@@ -188,6 +228,11 @@ class Chart {
         return "data:image/png;base64," . base64_encode($contents);
     }
 
+    /**
+    *   Function to get an attribute from chart object
+    *   
+    *   @param Array $dataset     Array of [x,y] coords for dataset to render with
+    */
     protected function validateDataset($dataset, $can_have_arrays = null, $can_have_mixed = null, $can_be_odd = null) {
         if(!is_array($dataset)) { 
             throw new \Chartling\Exceptions\InvalidDatasetException("Expected Array or values Or Array of location sets, got ".get_class($dataset));
